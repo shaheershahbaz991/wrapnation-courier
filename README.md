@@ -14,10 +14,12 @@ Google Apps Script par chalta hai, free hai, alag server nahi chahiye.
 1. Naya Google Sheet banayen. **Extensions → Apps Script**.
 2. `src/Code.gs`, `src/Index.html`, `src/appsscript.json` ka content wahan daalen
    (ya `clasp` use karein, neeche dekhein).
-3. Shopify admin: **Settings → Apps and sales channels → Develop apps**, nayi app,
-   scope `read_orders`, install, Admin API access token copy karein.
+3. Shopify mein app banayen (Settings → Apps and sales channels → Develop apps →
+   Build apps in Dev Dashboard), scope `read_orders`, store par install karein.
+   Settings se **Client ID** aur **Client secret** copy karein.
 4. Apps Script **Project Settings → Script Properties**: `SHOP` = `yourstore.myshopify.com`,
-   `TOKEN` = `shpat_...` (token kabhi git mein na daalein).
+   `CLIENT_ID`, `CLIENT_SECRET`. (Purani custom app ho to `CLIENT_*` ki jagah `TOKEN` = `shpat_...`.)
+   Ye cheezen kabhi git mein na daalein.
 5. Function `createTriggers` ek baar run karein (roz raat 11 baje auto sync).
 6. **Deploy → New deployment → Web app**, Execute as: Me, Access: Only myself.
    Link bookmark kar lein.

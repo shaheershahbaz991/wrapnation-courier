@@ -27,11 +27,31 @@ function doGet() {
 
 function getSheetUrl() { return SpreadsheetApp.getActiveSpreadsheet().getUrl(); }
 
+
+// Naye Shopify apps: CLIENT_ID + CLIENT_SECRET se token khud banta hai (24 ghante chalta hai).
+// Purani custom app ho to sirf TOKEN (shpat_...) set karein.
+function getToken_(p, shop) {
+  const fixed = p.getProperty('TOKEN');
+  if (fixed) return fixed;
+  const cache = CacheService.getScriptCache(), hit = cache.get('shopify_token');
+  if (hit) return hit;
+  const id = p.getProperty('CLIENT_ID'), secret = p.getProperty('CLIENT_SECRET');
+  if (!id || !secret) throw new Error('Script Properties mein CLIENT_ID aur CLIENT_SECRET set karein.');
+  const res = UrlFetchApp.fetch('https://' + shop + '/admin/oauth/access_token', {
+    method: 'post', contentType: 'application/x-www-form-urlencoded', muteHttpExceptions: true,
+    payload: {grant_type: 'client_credentials', client_id: id, client_secret: secret}});
+  if (res.getResponseCode() !== 200) throw new Error('Shopify token error: ' + res.getContentText());
+  const t = JSON.parse(res.getContentText()).access_token;
+  cache.put('shopify_token', t, 21000);
+  return t;
+}
+
 // Shopify se naye orders sheet mein (purana status kabhi overwrite nahi hota)
 function syncOrders() {
   const p = PropertiesService.getScriptProperties();
-  const shop = p.getProperty('SHOP'), token = p.getProperty('TOKEN');
-  if (!shop || !token) throw new Error('Script Properties mein SHOP aur TOKEN set karein.');
+  const shop = p.getProperty('SHOP');
+  if (!shop) throw new Error('Script Properties mein SHOP set karein.');
+  const token = getToken_(p, shop);
   const sh = getSheet_(), last = sh.getLastRow();
   const have = new Set(last > 1 ? sh.getRange(2, C.ID, last - 1, 1).getDisplayValues().flat() : []);
   const since = new Date(Date.now() - 30 * 864e5).toISOString();
