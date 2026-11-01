@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Wrapnation Courier</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+ --bg:#eef1f5;--surf:#fff;--ink:#14202b;--mute:#66727f;--line:#dbe1e8;--hd:#0e1726;--acc:#0891b2;--accw:#fff;--soft:#e4e9ef;
+ --New:#64748b;--Asked:#c77700;--Delivered:#16a34a;--Returned:#dc2626;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b121b;--surf:#152030;--ink:#e8edf3;--mute:#93a1b1;--line:#27364a;--hd:#060b12;--acc:#22c3e6;--accw:#04222b;--soft:#1e2c40;--New:#8392a6;--Asked:#f0a63a;--Delivered:#3ddc84;--Returned:#ff6b6b;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0b121b;--surf:#152030;--ink:#e8edf3;--mute:#93a1b1;--line:#27364a;--hd:#060b12;--acc:#22c3e6;--accw:#04222b;--soft:#1e2c40;--New:#8392a6;--Asked:#f0a63a;--Delivered:#3ddc84;--Returned:#ff6b6b;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);font-variant-numeric:tabular-nums;-webkit-text-size-adjust:100%}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--hd);z-index:10}
+.wrap{max-width:720px;margin:0 auto}
+header{background:var(--hd);color:#fff;position:sticky;top:env(safe-area-inset-top,0px);z-index:9}
+.hin{max-width:720px;margin:0 auto;padding:12px 14px;display:flex;align-items:center;gap:10px}
+.logo{width:34px;height:34px;border-radius:10px;background:var(--acc);color:var(--accw);display:grid;place-items:center;font-size:18px}
+.ttl{flex:1;line-height:1.15}.ttl b{font-size:17px;display:block}.ttl small{color:#9db0c4;font-size:12px}
+button{font:inherit;border:0;cursor:pointer;color:var(--ink)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.hb{background:rgba(255,255,255,.12);color:#fff;border-radius:10px;padding:9px 12px;font-size:14px}
+.hb.p{background:var(--acc);color:var(--accw);font-weight:600}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:12px 12px 4px}
+.st{background:var(--surf);border:1px solid var(--line);border-radius:14px;padding:10px 11px}
+.st span{display:block;font-size:12px;color:var(--mute)}.st b{display:block;font-size:19px;margin-top:2px}.st i{font-style:normal;font-size:11.5px;color:var(--mute)}
+.st.net{background:var(--acc);border-color:var(--acc);color:var(--accw)}.st.net span,.st.net i{color:inherit;opacity:.8}
+.q{padding:8px 12px 0}
+.q input{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--surf);color:var(--ink);font:inherit;font-size:15px}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding:10px 12px;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:none;background:var(--soft);border-radius:999px;padding:8px 13px;font-size:14px;color:var(--ink)}
+.tab em{font-style:normal;color:var(--mute);margin-left:5px;font-size:12.5px}
+.tab.on{background:var(--ink);color:var(--bg)}.tab.on em{color:inherit;opacity:.7}
+.card{background:var(--surf);border:1px solid var(--line);border-left:5px solid var(--c);border-radius:14px;margin:0 12px 9px;overflow:hidden}
+.card.New{--c:var(--New)}.card.Asked{--c:var(--Asked)}.card.Delivered{--c:var(--Delivered)}.card.Returned{--c:var(--Returned)}
+.hd{width:100%;background:none;text-align:left;padding:12px 13px;display:flex;gap:10px;align-items:flex-start}
+.l{flex:1;min-width:0}.no{font-weight:700;font-size:15.5px}
+.nm,.sub{font-size:13.5px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.r{text-align:right}.amt{font-weight:700;font-size:16px}
+.pill{display:inline-block;margin-top:4px;font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;color:var(--c);background:color-mix(in srgb,var(--c) 14%,transparent)}
+.bd{padding:0 13px 13px;border-top:1px dashed var(--line)}
+.bd[hidden]{display:none}
+.info{font-size:13.5px;line-height:1.45;margin:11px 0 4px}.info a{color:var(--acc);margin-right:12px;font-weight:600;text-decoration:none}
+.info .m{color:var(--mute)}
+label{display:block;font-size:12.5px;color:var(--mute);margin:10px 0 4px}
+.in{width:100%;padding:11px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;font-size:15px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.seg{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+.seg button{background:var(--soft);border-radius:10px;padding:10px 2px;font-size:13.5px}
+.seg button.on{background:var(--c2);color:#fff;font-weight:700}
+.seg button[data-v=New]{--c2:var(--New)}.seg button[data-v=Asked]{--c2:var(--Asked)}.seg button[data-v=Delivered]{--c2:var(--Delivered)}.seg button[data-v=Returned]{--c2:var(--Returned)}
+.net{margin-top:10px;padding:9px 11px;border-radius:10px;background:var(--soft);font-size:14px}
+.save{width:100%;margin-top:13px;padding:13px;border-radius:12px;background:var(--acc);color:var(--accw);font-weight:700;font-size:15.5px}
+.link{background:none;color:var(--acc);padding:0;text-decoration:underline;font-size:13.5px}
+.empty{padding:34px 20px;text-align:center;color:var(--mute);line-height:1.5}.empty b{display:block;color:var(--ink);font-size:16px;margin-bottom:4px}
+#msg{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:11px 18px;border-radius:12px;display:none;max-width:90%;text-align:center;z-index:20;font-size:14px}
+@media (prefers-reduced-motion:no-preference){.bd{animation:o .15s ease-out}@keyframes o{from{opacity:0}to{opacity:1}}}
+</style></head>
+<body>
+<header><div class="hin"><div class="logo">📦</div><div class="ttl"><b>Wrapnation Courier</b><small>COD parcels ka hisaab</small></div>
+<button class="hb p" id="syncBtn" onclick="sync()">Shopify sync</button><button class="hb" onclick="openSheet()">Sheet</button></div></header>
+<div class="wrap">
+<div class="stats" id="stats"></div>
+<div class="q"><input id="q" type="search" placeholder="Order no, naam, phone, city ya courier" oninput="render()"></div>
+<div class="tabs" id="tabs"></div>
+<div id="list"><div class="empty">Loading…</div></div>
+</div>
+<div id="msg"></div>
+<script>
+const STAT=['New','Asked','Delivered','Returned'];
+let orders={}, filt='All', open=new Set();
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const chg=o=>o.charge!=null&&o.charge!==''?Number(o.charge):250;
+const rs=n=>'Rs '+Number(n||0).toLocaleString('en-US');
+function toast(t,ms){const m=$('msg');m.textContent=t;m.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>m.style.display='none',ms||3000)}
+function load(){google.script.run.withSuccessHandler(a=>{orders={};a.forEach(o=>orders[o.id]=o);render()}).withFailureHandler(e=>{$('list').innerHTML='<div class="empty"><b>Data load nahi hua</b>'+esc(e.message)+'</div>'}).getOrders()}
+function setTab(s){filt=s;render()}
+function toggle(id){open.has(id)?open.delete(id):open.add(id);render()}
+function pick(id,v){
+ const g=$('st'+id);g.dataset.v=v;g.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
+ $('dl'+id).hidden=v!=='Delivered';calcNet(id);
+}
+function calcNet(id){
+ const a=Number($('am'+id).value)||0,c=Number($('ch'+id).value)||0;
+ $('nt2'+id).textContent='Net: '+rs(a)+' − '+rs(c)+' = '+rs(a-c);
+}
+function render(){
+ const q=$('q').value.toLowerCase();
+ const all=Object.values(orders).sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)));
+ const sum=(st,f)=>all.filter(o=>o.status===st).reduce((s,o)=>s+f(o),0);
+ const pend=sum('Asked',o=>Number(o.cod||0)),got=sum('Delivered',o=>Number(o.delivered||0)),ch=sum('Delivered',chg);
+ $('stats').innerHTML='<div class="st"><span>Courier ke paas</span><b>'+rs(pend)+'</b><i>COD baqi</i></div><div class="st"><span>Mila</span><b>'+rs(got)+'</b><i>Delivered</i></div><div class="st net"><span>Net</span><b>'+rs(got-ch)+'</b><i>charges '+rs(ch)+'</i></div>';
+ $('tabs').innerHTML=['All'].concat(STAT).map(s=>'<button class="tab'+(s===filt?' on':'')+'" onclick="setTab(\''+s+'\')">'+s+'<em>'+(s==='All'?all.length:all.filter(o=>o.status===s).length)+'</em></button>').join('');
+ if(!all.length){$('list').innerHTML='<div class="empty"><b>Abhi koi order nahi</b>Upar "Shopify sync" dabayen, Shopify ke latest orders aa jayenge.</div>';return}
+ const list=all.filter(o=>(filt==='All'||o.status===filt)&&[o.no,o.name,o.phone,o.city,o.courier].join(' ').toLowerCase().includes(q));
+ $('list').innerHTML=list.map(o=>{
+  const id=o.id,isOpen=open.has(id);
+  const d=o.createdAt?new Date(o.createdAt).toLocaleDateString('en-GB',{day:'2-digit',month:'short'}):'';
+  const ph=String(o.phone||'').replace(/[^0-9]/g,'');
+  const addr=o.address?esc(o.address)+(o.city?', '+esc(o.city):''):(o.city?esc(o.city)+' ':'')+'';
+  const amtShown=o.status==='Delivered'?Number(o.delivered||0):Number(o.cod||0);
+  const st=o.status||'New';
+  const dv=o.delivered!==''&&o.delivered!=null?o.delivered:o.cod;
+  return `<div class="card ${esc(st)}">
+  <button class="hd" onclick="toggle('${id}')"><div class="l"><div class="no">${esc(o.no)}</div><div class="nm">${esc(o.name)}${o.city?', '+esc(o.city):''}</div><div class="sub">${esc(d)}${o.courier?' | '+esc(o.courier):''}</div></div>
+  <div class="r"><div class="amt">${rs(amtShown)}</div><span class="pill">${esc(st)}</span></div></button>
+  <div class="bd" ${isOpen?'':'hidden'}>
+   <div class="info"><div>${addr||'<span class="m">Address nahi hai</span>'}</div>${o.items?'<div class="m">'+esc(o.items)+'</div>':''}<div class="m">Order total ${rs(o.total)}, COD ${rs(o.cod)}</div>${ph?'<div style="margin-top:6px"><a href="tel:'+ph+'">Call</a><a href="https://wa.me/'+ph+'" target="_blank" rel="noopener">WhatsApp</a></div>':''}</div>
+   <label>Status</label>
+   <div class="seg" id="st${id}" data-v="${esc(st)}">${STAT.map(s=>'<button data-v="'+s+'" class="'+(s===st?'on':'')+'" onclick="pick(\''+id+'\',\''+s+'\')">'+s+'</button>').join('')}</div>
+   <div class="two"><div><label>Courier</label><input class="in" id="co${id}" placeholder="Naam" value="${esc(o.courier)}"></div><div><label>Phone</label><input class="in" id="ph${id}" inputmode="tel" placeholder="03xx" value="${esc(o.phone)}"></div></div>
+   <div id="dl${id}" ${st==='Delivered'?'':'hidden'}><div class="two"><div><label>Amount mila (Rs)</label><input class="in" id="am${id}" type="number" inputmode="numeric" value="${esc(dv)}" oninput="calcNet('${id}')"></div><div><label>Courier charge (Rs)</label><input class="in" id="ch${id}" type="number" inputmode="numeric" value="${chg(o)}" oninput="calcNet('${id}')"></div></div><div class="net" id="nt2${id}">Net: ${rs(Number(dv||0)-chg(o))}</div></div>
+   <label>Note</label><input class="in" id="nt${id}" placeholder="Optional" value="${esc(o.note)}">
+   <button class="save" onclick="save('${id}')">Save changes</button>
+  </div></div>`}).join('')||'<div class="empty"><b>Kuch nahi mila</b>Search ya status tab badal kar dekhein.</div>';
+ open.forEach(id=>{if(orders[id]&&!$('am'+id)===false)calcNet(id)});
+}
+function save(id){
+ const g=k=>($(k+id)||{value:''}).value.trim(), status=$('st'+id).dataset.v;
+ const d={courier:g('co'),status,note:g('nt'),phone:g('ph'),amount:g('am'),charge:g('ch')===''?chg(orders[id]||{}):Number(g('ch'))};
+ toast('Saving…',10000);
+ google.script.run.withSuccessHandler(()=>{open.delete(id);toast('Saved ✅',1800);load()}).withFailureHandler(e=>toast('Save nahi hua: '+e.message,4500)).updateOrder(id,d);
+}
+function sync(){
+ const b=$('syncBtn');b.disabled=true;toast('Shopify se orders aa rahe hain…',30000);
+ google.script.run.withSuccessHandler(n=>{b.disabled=false;toast(n+' naye orders aaye',2500);load()}).withFailureHandler(e=>{b.disabled=false;toast(e.message,5000)}).syncOrders();
+}
+function openSheet(){google.script.run.withSuccessHandler(u=>window.open(u,'_blank')).getSheetUrl()}
+load();
+</script></body></html>
