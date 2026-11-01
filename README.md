@@ -4,11 +4,11 @@ Shopify orders → local courier ka hisaab → Google Sheet (database).
 Google Apps Script par chalta hai, free hai, alag server nahi chahiye.
 
 ## Kya karta hai
-- Shopify se orders fetch (pichhle 30 din), duplicate nahi banta
+- Shopify orders pehle **Inbox** mein dikhte hain (pichhle 30 din, unfulfilled). Sirf jo aap "Local courier" chunte hain wo Sheet mein jate hain; PostEx wale "Skip" ho jate hain aur Sheet mein nahi aate
 - Status: New / Asked / Delivered / Returned, courier ka naam, phone, note
 - Delivered par amount mila + courier charge (default 250) = Net
 - Sab kuch Google Sheet ke `Orders` tab mein save hota hai
-- Roz raat 11 baje khud sync + `Daily` tab mein roz ka hisaab
+- Roz raat 11 baje `Daily` tab mein roz ka hisaab
 
 ## Setup
 1. Naya Google Sheet banayen. **Extensions → Apps Script**.
@@ -20,7 +20,7 @@ Google Apps Script par chalta hai, free hai, alag server nahi chahiye.
 4. Apps Script **Project Settings → Script Properties**: `SHOP` = `yourstore.myshopify.com`,
    `CLIENT_ID`, `CLIENT_SECRET`. (Purani custom app ho to `CLIENT_*` ki jagah `TOKEN` = `shpat_...`.)
    Ye cheezen kabhi git mein na daalein.
-5. Function `createTriggers` ek baar run karein (roz raat 11 baje auto sync).
+5. Function `createTriggers` ek baar run karein (roz raat 11 baje Daily hisaab).
 6. **Deploy → New deployment → Web app**, Execute as: Me, Access: Only myself.
    Link bookmark kar lein.
 

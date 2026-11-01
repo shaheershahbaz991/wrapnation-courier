@@ -46,35 +46,60 @@ function getToken_(p, shop) {
   return t;
 }
 
-// Shopify se naye orders sheet mein (purana status kabhi overwrite nahi hota)
-function syncOrders() {
-  const p = PropertiesService.getScriptProperties();
-  const shop = p.getProperty('SHOP');
+// Shopify ke orders sheet mein NAHI jate. Pehle Inbox mein dikhte hain,
+// sirf wo orders sheet mein aate hain jo aap "Local courier" chunte hain.
+function fetchShopify_() {
+  const p = PropertiesService.getScriptProperties(), shop = p.getProperty('SHOP');
   if (!shop) throw new Error('Script Properties mein SHOP set karein.');
   const token = getToken_(p, shop);
-  const sh = getSheet_(), last = sh.getLastRow();
-  const have = new Set(last > 1 ? sh.getRange(2, C.ID, last - 1, 1).getDisplayValues().flat() : []);
   const since = new Date(Date.now() - 30 * 864e5).toISOString();
-  let url = 'https://' + shop + '/admin/api/2024-10/orders.json?status=any&limit=250&created_at_min=' + encodeURIComponent(since);
-  const rows = [];
+  let url = 'https://' + shop + '/admin/api/2024-10/orders.json?status=any&fulfillment_status=unfulfilled&limit=250&created_at_min=' + encodeURIComponent(since);
+  const out = [];
   while (url) {
     const res = UrlFetchApp.fetch(url, {headers: {'X-Shopify-Access-Token': token}, muteHttpExceptions: true});
     if (res.getResponseCode() !== 200) throw new Error('Shopify error: ' + res.getContentText());
     JSON.parse(res.getContentText()).orders.forEach(o => {
-      if (o.cancelled_at || have.has(String(o.id))) return;
+      if (o.cancelled_at) return;
       const a = o.shipping_address || {}, total = Number(o.total_price);
-      rows.push([o.name, Utilities.formatDate(new Date(o.created_at), TZ(), 'yyyy-MM-dd'),
-        a.name || ((o.customer || {}).first_name || ''), a.phone || o.phone || (o.customer || {}).phone || '',
-        a.city || '', [a.address1, a.address2].filter(Boolean).join(', '),
-        (o.line_items || []).map(i => i.quantity + 'x ' + i.title).join(', '),
-        total, o.financial_status === 'paid' ? 0 : total, '', 'New', '', '', DEFAULT_CHARGE, '', '', String(o.id)]);
+      out.push({id: String(o.id), no: o.name, createdAt: Utilities.formatDate(new Date(o.created_at), TZ(), 'yyyy-MM-dd'),
+        name: a.name || ((o.customer || {}).first_name || ''), phone: a.phone || o.phone || (o.customer || {}).phone || '',
+        city: a.city || '', address: [a.address1, a.address2].filter(Boolean).join(', '),
+        items: (o.line_items || []).map(i => i.quantity + 'x ' + i.title).join(', '),
+        total: total, cod: o.financial_status === 'paid' ? 0 : total});
     });
     const m = String(res.getHeaders()['Link'] || res.getHeaders()['link'] || '').match(/<([^>]+)>;\s*rel="next"/);
     url = m ? m[1] : null;
   }
-  rows.reverse(); // purane pehle, naye neeche
-  if (rows.length) sh.getRange(sh.getLastRow() + 1, 1, rows.length, HEADERS.length).setValues(rows);
+  return out;
+}
+
+function sheetIds_() {
+  const sh = getSheet_(), last = sh.getLastRow();
+  return new Set(last > 1 ? sh.getRange(2, C.ID, last - 1, 1).getDisplayValues().flat() : []);
+}
+
+// Inbox: Shopify ke wo orders jo na sheet mein hain na skip kiye gaye
+function getInbox() {
+  const have = sheetIds_();
+  const skipped = new Set(JSON.parse(PropertiesService.getScriptProperties().getProperty('SKIPPED') || '[]'));
+  return fetchShopify_().filter(o => !have.has(o.id) && !skipped.has(o.id));
+}
+
+// Chune hue orders sheet mein likho (local courier wale)
+function addOrders(list) {
+  const have = sheetIds_();
+  const rows = list.filter(o => !have.has(String(o.id))).map(o => [o.no, o.createdAt, o.name, o.phone, o.city,
+    o.address, o.items, Number(o.total) || 0, Number(o.cod) || 0, '', 'New', '', '', DEFAULT_CHARGE, '', '', String(o.id)]);
+  if (rows.length) { const sh = getSheet_(); sh.getRange(sh.getLastRow() + 1, 1, rows.length, HEADERS.length).setValues(rows); }
   return rows.length;
+}
+
+// PostEx / baqi orders: Inbox se hata do (sheet mein kuch nahi likha jata)
+function skipOrders(ids) {
+  const p = PropertiesService.getScriptProperties();
+  const all = JSON.parse(p.getProperty('SKIPPED') || '[]').concat(ids.map(String));
+  p.setProperty('SKIPPED', JSON.stringify(all.slice(-400)));
+  return true;
 }
 
 function getOrders() {
@@ -101,8 +126,8 @@ function updateOrder(id, d) {
   return true;
 }
 
-// Roz raat: naye orders lao aur Daily sheet mein hisaab likho
-function dailyJob() { syncOrders(); writeDaily_(); }
+// Roz raat: Daily sheet mein hisaab likho (naye orders sheet mein nahi aate)
+function dailyJob() { writeDaily_(); }
 
 function writeDaily_() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -127,7 +152,7 @@ function writeDaily_() {
   if (at >= 0) dh.getRange(at + 2, 1, 1, line.length).setValues([line]); else dh.appendRow(line);
 }
 
-// Ek baar chala dein: roz raat 11 baje dailyJob chalega
+// Ek baar chala dein: roz raat 11 baje Daily hisaab likha jayega
 function createTriggers() {
   ScriptApp.getProjectTriggers().filter(t => t.getHandlerFunction() === 'dailyJob').forEach(t => ScriptApp.deleteTrigger(t));
   ScriptApp.newTrigger('dailyJob').timeBased().everyDays(1).atHour(23).create();

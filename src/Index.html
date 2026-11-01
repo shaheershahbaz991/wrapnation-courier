@@ -69,7 +69,7 @@ label{display:block;font-size:12.5px;color:var(--mute);margin:10px 0 4px}
 <div id="msg"></div>
 <script>
 const STAT=['New','Asked','Delivered','Returned'];
-let orders={}, filt='All', open=new Set();
+let orders={}, filt='All', open=new Set(), inbox=[], inboxLoaded=false;
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const chg=o=>o.charge!=null&&o.charge!==''?Number(o.charge):250;
@@ -92,8 +92,9 @@ function render(){
  const sum=(st,f)=>all.filter(o=>o.status===st).reduce((s,o)=>s+f(o),0);
  const pend=sum('Asked',o=>Number(o.cod||0)),got=sum('Delivered',o=>Number(o.delivered||0)),ch=sum('Delivered',chg);
  $('stats').innerHTML='<div class="st"><span>Courier ke paas</span><b>'+rs(pend)+'</b><i>COD baqi</i></div><div class="st"><span>Mila</span><b>'+rs(got)+'</b><i>Delivered</i></div><div class="st net"><span>Net</span><b>'+rs(got-ch)+'</b><i>charges '+rs(ch)+'</i></div>';
- $('tabs').innerHTML=['All'].concat(STAT).map(s=>'<button class="tab'+(s===filt?' on':'')+'" onclick="setTab(\''+s+'\')">'+s+'<em>'+(s==='All'?all.length:all.filter(o=>o.status===s).length)+'</em></button>').join('');
- if(!all.length){$('list').innerHTML='<div class="empty"><b>Abhi koi order nahi</b>Upar "Shopify sync" dabayen, Shopify ke latest orders aa jayenge.</div>';return}
+ $('tabs').innerHTML=['Inbox','All'].concat(STAT).map(s=>'<button class="tab'+(s===filt?' on':'')+'" onclick="setTab(\''+s+'\')">'+s+'<em>'+(s==='Inbox'?(inboxLoaded?inbox.length:''):s==='All'?all.length:all.filter(o=>o.status===s).length)+'</em></button>').join('');
+ if(filt==='Inbox'){renderInbox();return}
+ if(!all.length){$('list').innerHTML='<div class="empty"><b>Abhi koi order nahi</b>"Shopify sync" dabayen, Inbox mein jo orders local courier se bhejne hain unhe chunen.</div>';return}
  const list=all.filter(o=>(filt==='All'||o.status===filt)&&[o.no,o.name,o.phone,o.city,o.courier].join(' ').toLowerCase().includes(q));
  $('list').innerHTML=list.map(o=>{
   const id=o.id,isOpen=open.has(id);
@@ -125,7 +126,22 @@ function save(id){
 }
 function sync(){
  const b=$('syncBtn');b.disabled=true;toast('Shopify se orders aa rahe hain…',30000);
- google.script.run.withSuccessHandler(n=>{b.disabled=false;toast(n+' naye orders aaye',2500);load()}).withFailureHandler(e=>{b.disabled=false;toast(e.message,5000)}).syncOrders();
+ google.script.run.withSuccessHandler(a=>{b.disabled=false;inbox=a;inboxLoaded=true;filt='Inbox';toast(a.length+' orders Inbox mein',2500);render()}).withFailureHandler(e=>{b.disabled=false;toast(e.message,5000)}).getInbox();
+}
+function renderInbox(){
+ const q=$('q').value.toLowerCase();
+ if(!inboxLoaded){$('list').innerHTML='<div class="empty"><b>Shopify orders abhi nahi laye</b>Upar "Shopify sync" dabayen.</div>';return}
+ const list=inbox.filter(o=>[o.no,o.name,o.city].join(' ').toLowerCase().includes(q));
+ if(!list.length){$('list').innerHTML='<div class="empty"><b>Inbox khali hai</b>Koi naya order nahi.</div>';return}
+ $('list').innerHTML=list.map(o=>`<div class="card New"><div class="hd" style="cursor:default"><div class="l"><div class="no">${esc(o.no)}</div><div class="nm">${esc(o.name)}${o.city?', '+esc(o.city):''}</div><div class="sub">${esc(o.items)}</div></div><div class="r"><div class="amt">${rs(o.cod)}</div><span class="pill">COD</span></div></div>
+ <div class="bd" style="display:flex;gap:8px;padding-top:11px"><button class="save" style="margin:0" onclick="addOne('${o.id}')">Local courier</button><button class="save" style="margin:0;background:var(--soft);color:var(--ink)" onclick="skipOne('${o.id}')">PostEx / Skip</button></div></div>`).join('');
+}
+function addOne(id){
+ const o=inbox.find(x=>x.id===id);if(!o)return;toast('Add ho raha hai…',10000);
+ google.script.run.withSuccessHandler(()=>{inbox=inbox.filter(x=>x.id!==id);toast('Local courier list mein add ✅',2000);load()}).withFailureHandler(e=>toast(e.message,4500)).addOrders([o]);
+}
+function skipOne(id){
+ google.script.run.withSuccessHandler(()=>{inbox=inbox.filter(x=>x.id!==id);toast('Inbox se hata diya',1800);render()}).withFailureHandler(e=>toast(e.message,4500)).skipOrders([id]);
 }
 function openSheet(){google.script.run.withSuccessHandler(u=>window.open(u,'_blank')).getSheetUrl()}
 load();
