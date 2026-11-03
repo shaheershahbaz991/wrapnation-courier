@@ -117,13 +117,18 @@ function updateOrder(id, d) {
   const i = sh.getRange(2, C.ID, last - 1, 1).getDisplayValues().flat().indexOf(String(id));
   if (i < 0) throw new Error('Order nahi mila');
   const row = i + 2, del = d.status === 'Delivered', charge = Number(d.charge) || 0;
+  const prev = sh.getRange(row, C.STATUS).getValue();
   const v = (c, x) => sh.getRange(row, c).setValue(x);
   v(C.COURIER, d.courier || ''); v(C.STATUS, d.status); v(C.NOTE, d.note || ''); v(C.PHONE, d.phone || '');
   v(C.CHARGE, charge);
   v(C.DELIVERED, del ? Number(d.amount) || 0 : '');
   v(C.DDATE, del ? today_() : '');
   v(C.NET, del ? (Number(d.amount) || 0) - charge : '');
-  return true;
+  let shopify = '';
+  if (del && prev !== 'Delivered') {
+    try { shopify = shopifyDelivered_(id); } catch (e) { shopify = 'Shopify delivered nahi hua: ' + e.message; }
+  }
+  return {ok: true, shopify: shopify};
 }
 
 // Roz raat: Daily sheet mein hisaab likho (naye orders sheet mein nahi aate)
@@ -217,4 +222,22 @@ function migrateAskedToHandedOver() {
   v.forEach(r => { if (r[0] === 'Asked') { r[0] = 'Handed over'; n++; } });
   rg.setValues(v);
   return n;
+}
+
+// Delivered par Shopify mein fulfillment ka status "Delivered" kar do
+function shopifyDelivered_(id) {
+  const r = shopifyFetch_('orders/' + id + '/fulfillments.json');
+  if (r.getResponseCode() !== 200) return 'Shopify delivered update nahi hua (' + r.getResponseCode() + '): ' + r.getContentText().slice(0, 150);
+  const all = JSON.parse(r.getContentText()).fulfillments || [];
+  if (!all.length) return 'Shopify par order Fulfilled hi nahi tha, pehle "Courier ko diya" dabayein';
+  const todo = all.filter(f => f.status === 'success' && f.shipment_status !== 'delivered');
+  if (!todo.length) return 'Shopify par pehle se Delivered hai';
+  let ok = 0, err = '';
+  todo.forEach(f => {
+    const e = shopifyFetch_('orders/' + id + '/fulfillments/' + f.id + '/events.json',
+      {method: 'post', contentType: 'application/json', payload: JSON.stringify({event: {status: 'delivered'}})});
+    if (e.getResponseCode() === 201 || e.getResponseCode() === 200) ok++;
+    else err = e.getResponseCode() + ': ' + e.getContentText().slice(0, 150);
+  });
+  return ok ? 'Shopify par Delivered ✅' : 'Shopify delivered nahi hua (' + err + ')';
 }
