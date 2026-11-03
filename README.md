@@ -5,7 +5,7 @@ Google Apps Script par chalta hai, free hai, alag server nahi chahiye.
 
 ## Kya karta hai
 - Shopify orders pehle **Inbox** mein dikhte hain (pichhle 30 din, unfulfilled). Sirf jo aap "Local courier" chunte hain wo Sheet mein jate hain; PostEx wale "Skip" ho jate hain aur Sheet mein nahi aate
-- Status: New / Asked / Delivered / Returned, courier ka naam, phone, note
+- Status: New / Handed over / Delivered / Returned, courier ka naam, phone, note
 - Delivered par amount mila + courier charge (default 250) = Net
 - Sab kuch Google Sheet ke `Orders` tab mein save hota hai
 - Roz raat 11 baje `Daily` tab mein roz ka hisaab

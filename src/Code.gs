@@ -107,7 +107,7 @@ function getOrders() {
   if (last < 2) return [];
   return sh.getRange(2, 1, last - 1, HEADERS.length).getDisplayValues().map(r => ({
     no: r[0], createdAt: r[1], name: r[2], phone: r[3], city: r[4], address: r[5], items: r[6],
-    total: r[7], cod: r[8], courier: r[9], status: r[10] || 'New', delivered: r[11], deliveredDate: r[12],
+    total: r[7], cod: r[8], courier: r[9], status: r[10] === 'Asked' ? 'Handed over' : (r[10] || 'New'), delivered: r[11], deliveredDate: r[12],
     charge: r[13], note: r[15], id: r[16]
   })).reverse();
 }
@@ -134,19 +134,19 @@ function writeDaily_() {
   let dh = ss.getSheetByName(DAILY_NAME);
   if (!dh) {
     dh = ss.insertSheet(DAILY_NAME);
-    dh.appendRow(['Date','New','Asked','Delivered','Returned','COD with courier','Delivered today','Charges today','Net today']);
+    dh.appendRow(['Date','New','Handed over','Delivered','Returned','COD with courier','Delivered today','Charges today','Net today']);
     dh.setFrozenRows(1); dh.getRange('A:A').setNumberFormat('@');
   }
   const sh = getSheet_(), last = sh.getLastRow();
   const data = last > 1 ? sh.getRange(2, 1, last - 1, HEADERS.length).getDisplayValues() : [];
-  const t = today_(), n = {New:0, Asked:0, Delivered:0, Returned:0};
+  const t = today_(), n = {New:0, 'Handed over':0, Delivered:0, Returned:0};
   let cod = 0, got = 0, ch = 0;
   data.forEach(r => {
-    const s = r[C.STATUS - 1] || 'New'; n[s] = (n[s] || 0) + 1;
-    if (s === 'Asked') cod += Number(r[C.COD - 1]) || 0;
+    let s = r[C.STATUS - 1] || 'New'; if (s === 'Asked') s = 'Handed over'; n[s] = (n[s] || 0) + 1;
+    if (s === 'Handed over') cod += Number(r[C.COD - 1]) || 0;
     if (s === 'Delivered' && r[C.DDATE - 1] === t) { got += Number(r[C.DELIVERED - 1]) || 0; ch += Number(r[C.CHARGE - 1]) || 0; }
   });
-  const line = [t, n.New, n.Asked, n.Delivered, n.Returned, cod, got, ch, got - ch];
+  const line = [t, n.New, n['Handed over'], n.Delivered, n.Returned, cod, got, ch, got - ch];
   const dl = dh.getLastRow();
   const at = dl > 1 ? dh.getRange(2, 1, dl - 1, 1).getDisplayValues().flat().indexOf(t) : -1;
   if (at >= 0) dh.getRange(at + 2, 1, 1, line.length).setValues([line]); else dh.appendRow(line);
@@ -189,7 +189,7 @@ function markGiven_(id) {
   const i = sh.getRange(2, C.ID, last - 1, 1).getDisplayValues().flat().indexOf(String(id));
   if (i < 0) return;
   const cell = sh.getRange(i + 2, C.STATUS);
-  if (!cell.getValue() || cell.getValue() === 'New') cell.setValue('Asked');
+  if (!cell.getValue() || cell.getValue() === 'New') cell.setValue('Handed over');
 }
 
 function fulfillOrder(id, tracking, notify) {
@@ -206,4 +206,15 @@ function fulfillOrder(id, tracking, notify) {
     throw new Error('Fulfill nahi hua (' + r2.getResponseCode() + '): ' + r2.getContentText().slice(0, 250));
   markGiven_(id);
   return {ok: true, msg: 'Shopify par Fulfilled ✅ (' + tracking + ')'};
+}
+
+// Ek baar chalayein: purane "Asked" status Sheet mein "Handed over" ban jayenge
+function migrateAskedToHandedOver() {
+  const sh = getSheet_(), last = sh.getLastRow();
+  if (last < 2) return 0;
+  const rg = sh.getRange(2, C.STATUS, last - 1, 1), v = rg.getValues();
+  let n = 0;
+  v.forEach(r => { if (r[0] === 'Asked') { r[0] = 'Handed over'; n++; } });
+  rg.setValues(v);
+  return n;
 }
