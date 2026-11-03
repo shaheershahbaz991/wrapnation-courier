@@ -145,7 +145,7 @@ function save(id){
  const g=k=>($(k+id)||{value:''}).value.trim(), status=$('st'+id).dataset.v;
  const d={courier:g('co'),status,note:g('nt'),phone:g('ph'),amount:g('am'),charge:g('ch')===''?chg(orders[id]||{}):Number(g('ch'))};
  toast('Saving…',10000);
- google.script.run.withSuccessHandler(r=>{open.delete(id);toast('Saved ✅'+(r&&r.shopify?' | '+r.shopify:''),r&&r.shopify?5000:1800);load()}).withFailureHandler(e=>toast('Save nahi hua: '+e.message,4500)).updateOrder(id,d);
+ google.script.run.withSuccessHandler(r=>{open.delete(id);toast('Saved ✅'+(r&&r.shopify?' | '+r.shopify:''),r&&r.shopify?8000:1800);load()}).withFailureHandler(e=>toast('Save nahi hua: '+e.message,4500)).updateOrder(id,d);
 }
 function sync(){
  const b=$('syncBtn');b.disabled=true;toast('Shopify se orders aa rahe hain…',30000);

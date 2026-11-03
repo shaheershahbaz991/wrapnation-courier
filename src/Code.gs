@@ -127,6 +127,9 @@ function updateOrder(id, d) {
   let shopify = '';
   if (del && prev !== 'Delivered') {
     try { shopify = shopifyDelivered_(id); } catch (e) { shopify = 'Shopify delivered nahi hua: ' + e.message; }
+    if (Number(sh.getRange(row, C.COD).getValue()) > 0) {
+      try { shopify += ' | ' + shopifyMarkPaid_(id); } catch (e) { shopify += ' | Payment update nahi hua: ' + e.message; }
+    }
   }
   return {ok: true, shopify: shopify};
 }
@@ -240,4 +243,17 @@ function shopifyDelivered_(id) {
     else err = e.getResponseCode() + ': ' + e.getContentText().slice(0, 150);
   });
   return ok ? 'Shopify par Delivered ✅' : 'Shopify delivered nahi hua (' + err + ')';
+}
+
+// COD ka paisa mil gaya: Shopify par order "Payment pending" se "Paid" kar do (scope: write_orders)
+function shopifyMarkPaid_(id) {
+  const q = 'mutation($id: ID!){ orderMarkAsPaid(input:{id:$id}){ order{ id displayFinancialStatus } userErrors{ field message } } }';
+  const res = shopifyFetch_('graphql.json', {method: 'post', contentType: 'application/json',
+    payload: JSON.stringify({query: q, variables: {id: 'gid://shopify/Order/' + id}})});
+  if (res.getResponseCode() !== 200) return 'Payment update nahi hua (' + res.getResponseCode() + '): ' + res.getContentText().slice(0, 150);
+  const j = JSON.parse(res.getContentText());
+  if (j.errors) return 'Payment update nahi hua: ' + JSON.stringify(j.errors).slice(0, 200) + ' (write_orders scope check karein)';
+  const r = (j.data || {}).orderMarkAsPaid || {};
+  if (r.userErrors && r.userErrors.length) return 'Payment: ' + r.userErrors.map(e => e.message).join(', ');
+  return 'Payment Paid ✅';
 }
