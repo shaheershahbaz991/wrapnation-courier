@@ -157,3 +157,53 @@ function createTriggers() {
   ScriptApp.getProjectTriggers().filter(t => t.getHandlerFunction() === 'dailyJob').forEach(t => ScriptApp.deleteTrigger(t));
   ScriptApp.newTrigger('dailyJob').timeBased().everyDays(1).atHour(23).create();
 }
+
+// Label settings (sender, default weight, dimensions, tracking prefix)
+function getLabelSettings() {
+  return JSON.parse(PropertiesService.getScriptProperties().getProperty('LABEL') || 'null');
+}
+function saveLabelSettings(s) {
+  PropertiesService.getScriptProperties().setProperty('LABEL', JSON.stringify(s));
+  return true;
+}
+
+// ---- Shopify fulfillment: courier ko dene par order Fulfilled ----
+// Scopes: read_orders + read/write_merchant_managed_fulfillment_orders
+function shopifyFetch_(path, opt) {
+  const p = PropertiesService.getScriptProperties(), shop = p.getProperty('SHOP');
+  let res;
+  for (let t = 0; t < 2; t++) {
+    const o = Object.assign({headers: {'X-Shopify-Access-Token': getToken_(p, shop)}, muteHttpExceptions: true}, opt || {});
+    res = UrlFetchApp.fetch('https://' + shop + '/admin/api/2024-10/' + path, o);
+    const code = res.getResponseCode();
+    // Purana cached token naye scopes ke baghair ho sakta hai: cache saaf karke ek baar dobara
+    if ((code === 401 || code === 403) && t === 0 && !p.getProperty('TOKEN')) { CacheService.getScriptCache().remove('shopify_token'); continue; }
+    break;
+  }
+  return res;
+}
+
+function markGiven_(id) {
+  const sh = getSheet_(), last = sh.getLastRow();
+  if (last < 2) return;
+  const i = sh.getRange(2, C.ID, last - 1, 1).getDisplayValues().flat().indexOf(String(id));
+  if (i < 0) return;
+  const cell = sh.getRange(i + 2, C.STATUS);
+  if (!cell.getValue() || cell.getValue() === 'New') cell.setValue('Asked');
+}
+
+function fulfillOrder(id, tracking, notify) {
+  const r1 = shopifyFetch_('orders/' + id + '/fulfillment_orders.json');
+  if (r1.getResponseCode() !== 200)
+    throw new Error('Shopify (' + r1.getResponseCode() + '): ' + r1.getContentText().slice(0, 200) + ' | Scopes aur app approval check karein.');
+  const fos = JSON.parse(r1.getContentText()).fulfillment_orders.filter(f => f.status === 'open' || f.status === 'in_progress');
+  if (!fos.length) { markGiven_(id); return {ok: true, msg: 'Shopify par pehle se fulfilled hai'}; }
+  const body = {fulfillment: {notify_customer: !!notify,
+    tracking_info: {number: String(tracking || ''), company: 'Wrapnation Courier'},
+    line_items_by_fulfillment_order: fos.map(f => ({fulfillment_order_id: f.id}))}};
+  const r2 = shopifyFetch_('fulfillments.json', {method: 'post', contentType: 'application/json', payload: JSON.stringify(body)});
+  if (r2.getResponseCode() !== 200 && r2.getResponseCode() !== 201)
+    throw new Error('Fulfill nahi hua (' + r2.getResponseCode() + '): ' + r2.getContentText().slice(0, 250));
+  markGiven_(id);
+  return {ok: true, msg: 'Shopify par Fulfilled ✅ (' + tracking + ')'};
+}

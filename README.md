@@ -15,7 +15,7 @@ Google Apps Script par chalta hai, free hai, alag server nahi chahiye.
 2. `src/Code.gs`, `src/Index.html`, `src/appsscript.json` ka content wahan daalen
    (ya `clasp` use karein, neeche dekhein).
 3. Shopify mein app banayen (Settings → Apps and sales channels → Develop apps →
-   Build apps in Dev Dashboard), scope `read_orders`, store par install karein.
+   Build apps in Dev Dashboard), scopes `read_orders`, `read_merchant_managed_fulfillment_orders`, `write_merchant_managed_fulfillment_orders`, store par install karein.
    Settings se **Client ID** aur **Client secret** copy karein.
 4. Apps Script **Project Settings → Script Properties**: `SHOP` = `yourstore.myshopify.com`,
    `CLIENT_ID`, `CLIENT_SECRET`. (Purani custom app ho to `CLIENT_*` ki jagah `TOKEN` = `shpat_...`.)
